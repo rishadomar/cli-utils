@@ -1,7 +1,24 @@
 #!/bin/bash
 
 # Script to get git changes from multiple repositories
-# Usage: ./git-changes-all.sh [--author "name"] [--since "date"] [--until "date"]
+# Usage: ./git-my-changes [--since "date"]
+# If --since is not specified, defaults to "yesterday"
+
+# Parse command line arguments
+SINCE="yesterday"
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --since)
+            SINCE="$2"
+            shift 2
+            ;;
+        *)
+            echo "Unknown option: $1"
+            echo "Usage: ./git-my-changes [--since \"date\"]"
+            exit 1
+            ;;
+    esac
+done
 
 # Hardcoded list of repository folders (relative or absolute paths)
 repositories=(
@@ -26,8 +43,7 @@ if [ ! -f "$GIT_CHANGES_SCRIPT" ]; then
 fi
 
 # Pass all arguments to each repository
-# ARGS="$@"
-ARGS=(--author rishad --since "1 week ago" --brief)
+ARGS=(--author "${USERNAME}" --since "$SINCE" --brief)
 
 echo "=================================="
 echo "Git Changes Across All Repositories"

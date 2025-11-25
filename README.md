@@ -7,15 +7,23 @@
 
 Examples:
 
-### List changes made
+### List changes made in the current repo
 
-git-changes --since '1 week ago'
-git-changes --author rishad --since yesterday
-git-changes --author rishad --since '1 week ago' --brief
+-   List changes made by all users in the last week
+    `git-changes --since '1 week ago'`
 
-### List MY changes
+-   List changes made by me today
+    `git-changes --author $USERNAME --since yesterday`
 
-This requires you to edit the git-my-changes utility:
+-   List changes made by specific user (brief mode)
+    `git-changes --author ahmed --since '1 week ago' --brief`
 
--   list your repositories for which you want a log
--   add your personal arguments like: ARGS=(--author rishad --since "1 week ago" --brief)
+### List MY changes in all the repos that I specify
+
+This requires you to edit the git-my-changes utility and the paths of repositories for which you want a log
+
+-   List all the changes made by me today
+    `git-my-changes`
+
+-   List all the changes made by me in the last week
+    `git-my-changes --since '1 week ago'`
