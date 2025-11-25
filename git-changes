@@ -1,0 +1,99 @@
+#!/bin/bash
+
+# Script to list git changes with optional filters
+# Usage: ./git-changes.sh [--author "name"] [--since "date"] [--until "date"] [--brief]
+
+AUTHOR=""
+SINCE=""
+UNTIL=""
+BRIEF=false
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --author)
+            AUTHOR="$2"
+            shift 2
+            ;;
+        --since|--start)
+            SINCE="$2"
+            shift 2
+            ;;
+        --until|--end)
+            UNTIL="$2"
+            shift 2
+            ;;
+        --brief)
+            BRIEF=true
+            shift
+            ;;
+        --help|-h)
+            echo "Usage: $0 [OPTIONS]"
+            echo ""
+            echo "Options:"
+            echo "  --author NAME      Filter commits by author name"
+            echo "  --since DATE       Show commits since date (e.g., '2025-11-01', '1 week ago')"
+            echo "  --until DATE       Show commits until date (e.g., '2025-11-12', 'yesterday')"
+            echo "  --brief            Suppress header and footer output"
+            echo "  --help, -h         Show this help message"
+            echo ""
+            echo "Examples:"
+            echo "  $0 --author 'John Doe' --since '2025-11-01'"
+            echo "  $0 --since '1 week ago' --until 'yesterday'"
+            echo "  $0 --author 'Jane' --since '2025-10-01' --until '2025-11-01'"
+            echo "  $0 --brief --since '1 week ago'"
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1"
+            echo "Use --help for usage information"
+            exit 1
+            ;;
+    esac
+done
+
+# Build git log command
+GIT_CMD="git log --pretty=format:'%h | %an | %ad | %s' --date=short"
+
+# Modify format for brief mode
+if [ "$BRIEF" = true ]; then
+    GIT_CMD="git log --no-merges --pretty=format:'%ad | %s' --date=short"
+else
+    GIT_CMD="git log --pretty=format:'%h | %an | %ad | %s' --date=short"
+fi
+
+# Add optional parameters
+if [ -n "$AUTHOR" ]; then
+    GIT_CMD="$GIT_CMD --author='$AUTHOR'"
+fi
+
+if [ -n "$SINCE" ]; then
+    GIT_CMD="$GIT_CMD --since='$SINCE'"
+fi
+
+if [ -n "$UNTIL" ]; then
+    GIT_CMD="$GIT_CMD --until='$UNTIL'"
+fi
+
+# Display filter information (unless --brief is specified)
+if [ "$BRIEF" = false ]; then
+    echo "Git Changes Report"
+    echo "=================="
+    if [ -n "$AUTHOR" ]; then
+        echo "Author: $AUTHOR"
+    fi
+    if [ -n "$SINCE" ]; then
+        echo "Since: $SINCE"
+    fi
+    if [ -n "$UNTIL" ]; then
+        echo "Until: $UNTIL"
+    fi
+    if [ -z "$AUTHOR" ] && [ -z "$SINCE" ] && [ -z "$UNTIL" ]; then
+        echo "Showing all commits"
+    fi
+    echo "=================="
+    echo ""
+fi
+
+# Execute git log command
+eval $GIT_CMD

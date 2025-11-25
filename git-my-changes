@@ -1,0 +1,69 @@
+#!/bin/bash
+
+# Script to get git changes from multiple repositories
+# Usage: ./git-changes-all.sh [--author "name"] [--since "date"] [--until "date"]
+
+# Hardcoded list of repository folders (relative or absolute paths)
+repositories=(
+    "c:/Users/risha/projects/livingston/digital-design-system-react"
+    "c:/Users/risha/projects/livingston/digital-design-system-react-npm"
+    "c:/Users/risha/projects/livingston/digital-design-system-starter-spa"
+    "c:/Users/risha/projects/livingston/lii-pay-portal-spa"
+    "c:/Users/risha/projects/livingston/lii-pay-support-spa"
+    "c:/Users/risha/projects/livingston/tchc-spa"
+    "c:/Users/risha/projects/livingston/tchc-pdf-wrk"
+    "c:/Users/risha/projects/livingston/continuous_bonds"
+)
+
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+GIT_CHANGES_SCRIPT="$SCRIPT_DIR/git-changes"
+
+# Check if git-changes script exists
+if [ ! -f "$GIT_CHANGES_SCRIPT" ]; then
+    echo "Error: git-changes script not found at $GIT_CHANGES_SCRIPT"
+    exit 1
+fi
+
+# Pass all arguments to each repository
+# ARGS="$@"
+ARGS=(--author rishad --since "1 week ago" --brief)
+
+echo "=================================="
+echo "Git Changes Across All Repositories"
+echo "=================================="
+echo ""
+
+# Loop through each repository
+for repo in "${repositories[@]}"; do
+    # Expand ~ to home directory if present
+    repo="${repo/#\~/$HOME}"
+    
+    if [ ! -d "$repo" ]; then
+        echo "⚠️  Warning: Repository not found: $repo"
+        echo ""
+        continue
+    fi
+    
+    if [ ! -d "$repo/.git" ]; then
+        echo "⚠️  Warning: Not a git repository: $repo"
+        echo ""
+        continue
+    fi
+    
+    echo "📁 Repository: $repo"
+    echo "----------------------------------"
+    
+    # Change to repository directory and run git-changes
+    (
+        cd "$repo" || exit
+        bash "$GIT_CHANGES_SCRIPT" "${ARGS[@]}"
+    )
+    
+    echo ""
+    echo ""
+done
+
+echo "=================================="
+echo "End of Report"
+echo "=================================="
