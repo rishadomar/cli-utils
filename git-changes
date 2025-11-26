@@ -53,13 +53,13 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Build git log command
-GIT_CMD="git log --pretty=format:'%h | %an | %ad | %s' --date=short"
+GIT_CMD="git log --pretty=format:'%h | %an | %ad | %B' --date=short"
 
 # Modify format for brief mode
 if [ "$BRIEF" = true ]; then
-    GIT_CMD="git log --no-merges --pretty=format:'%ad | %s' --date=short"
+    GIT_CMD="git log --no-merges --pretty=format:'%ad | %B' --date=short"
 else
-    GIT_CMD="git log --pretty=format:'%h | %an | %ad | %s' --date=short"
+    GIT_CMD="git log --pretty=format:'%h | %an | %ad | %B' --date=short"
 fi
 
 # Add optional parameters
