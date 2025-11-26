@@ -22,14 +22,14 @@ done
 
 # Hardcoded list of repository folders (relative or absolute paths)
 repositories=(
-    "c:/Users/risha/projects/livingston/digital-design-system-react"
-    "c:/Users/risha/projects/livingston/digital-design-system-react-npm"
-    "c:/Users/risha/projects/livingston/digital-design-system-starter-spa"
-    "c:/Users/risha/projects/livingston/lii-pay-portal-spa"
-    "c:/Users/risha/projects/livingston/lii-pay-support-spa"
-    "c:/Users/risha/projects/livingston/tchc-spa"
-    "c:/Users/risha/projects/livingston/tchc-pdf-wrk"
-    "c:/Users/risha/projects/livingston/continuous_bonds"
+    "~/projects/livingston/digital-design-system-react"
+    "~/projects/livingston/digital-design-system-react-npm"
+    "~/projects/livingston/digital-design-system-starter-spa"
+    "~/projects/livingston/lii-pay-portal-spa"
+    "~/projects/livingston/lii-pay-support-spa"
+    "~/projects/livingston/tchc-spa"
+    "~/projects/livingston/tchc-pdf-wrk"
+    "~/projects/livingston/continuous_bonds"
 )
 
 # Get the directory where this script is located
