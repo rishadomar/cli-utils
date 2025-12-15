@@ -1,0 +1,44 @@
+#!/bin/bash
+
+# Script to get git changes from multiple repositories
+# Usage: ./git-dds-team-changes [--since "date"]
+# If --since is not specified, defaults to "1 week ago"
+
+# Parse command line arguments
+SINCE="1 week ago"
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --since)
+            SINCE="$2"
+            shift 2
+            ;;
+        *)
+            echo "Unknown option: $1"
+            echo "Usage: ./git-dds-team-changes [--since \"date\"]"
+            exit 1
+            ;;
+    esac
+done
+
+OUTPUT_FILE=~/dds-team-changes.txt
+> $OUTPUT_FILE
+
+echo "--- DDS ---" >> $OUTPUT_FILE
+cd ~/projects/livingston/digital-design-system-react
+git-changes --author rishad --since "$SINCE" >> $OUTPUT_FILE
+git-changes --author johannes --since "$SINCE" >> $OUTPUT_FILE
+git-changes --author ahmed --since "$SINCE" >> $OUTPUT_FILE
+
+echo "--- NPM ---" >> $OUTPUT_FILE
+cd ~/projects/livingston/digital-design-system-react-npm
+git-changes --author rishad --since "$SINCE" >> $OUTPUT_FILE
+git-changes --author johannes --since "$SINCE" >> $OUTPUT_FILE
+git-changes --author ahmed --since "$SINCE" >> $OUTPUT_FILE
+
+echo "--- Starter app ---" >> $OUTPUT_FILE
+cd ~/projects/livingston/digital-design-system-starter-spa
+git-changes --author rishad --since "$SINCE" >> $OUTPUT_FILE
+git-changes --author johannes --since "$SINCE" >> $OUTPUT_FILE
+git-changes --author ahmed --since "$SINCE" >> $OUTPUT_FILE
+
+echo "See the compiled changes in $OUTPUT_FILE"
