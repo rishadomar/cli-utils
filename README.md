@@ -33,6 +33,7 @@ This requires you to edit the git-my-changes utility and the paths of repositori
 This requires a Gemini API key (free from https://aistudio.google.com/apikey)
 
 Setup:
+
 ```bash
 export GEMINI_API_KEY='your-api-key-here'
 # Add to ~/.bashrc for persistence
