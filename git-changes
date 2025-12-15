@@ -59,7 +59,7 @@ GIT_CMD="git log --pretty=format:'%h | %an | %ad | %B' --date=short"
 if [ "$BRIEF" = true ]; then
     GIT_CMD="git log --no-merges --pretty=format:'%ad | %B' --date=short"
 else
-    GIT_CMD="git log --pretty=format:'%h | %an | %ad | %B' --date=short"
+    GIT_CMD="git log --no-merges --pretty=format:'%h | %an | %ad | %B' --date=short"
 fi
 
 # Add optional parameters
@@ -96,4 +96,4 @@ if [ "$BRIEF" = false ]; then
 fi
 
 # Execute git log command
-eval $GIT_CMD
+eval $GIT_CMD | sed -e :a -e '/^\s*$/d;N;s/\n$//;ta'
