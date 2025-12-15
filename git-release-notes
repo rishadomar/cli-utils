@@ -1,0 +1,221 @@
+#!/bin/bash
+
+# Script to generate AI-powered release notes from git commits
+# Usage: ./git-release-notes --from <source-branch> [OPTIONS]
+
+set -e
+
+FROM_BRANCH=""
+TO_BRANCH="HEAD"
+OUTPUT_FILE=""
+GEMINI_API_KEY="${GEMINI_API_KEY}"
+MODEL="gemini-2.0-flash-exp"
+VERBOSE=false
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --from|--source)
+            FROM_BRANCH="$2"
+            shift 2
+            ;;
+        --to|--target)
+            TO_BRANCH="$2"
+            shift 2
+            ;;
+        --output|-o)
+            OUTPUT_FILE="$2"
+            shift 2
+            ;;
+        --api-key)
+            GEMINI_API_KEY="$2"
+            shift 2
+            ;;
+        --model)
+            MODEL="$2"
+            shift 2
+            ;;
+        --verbose|-v)
+            VERBOSE=true
+            shift
+            ;;
+        --help|-h)
+            echo "Usage: $0 --from <source-branch> [OPTIONS]"
+            echo ""
+            echo "Generate AI-powered release notes from git commits between branches."
+            echo ""
+            echo "Required:"
+            echo "  --from, --source BRANCH    Source branch to compare from"
+            echo ""
+            echo "Options:"
+            echo "  --to, --target BRANCH      Target branch to compare to (default: HEAD)"
+            echo "  --output, -o FILE          Save output to file instead of stdout"
+            echo "  --api-key KEY              Gemini API key (or set GEMINI_API_KEY env var)"
+            echo "  --model MODEL              Gemini model to use (default: gemini-2.0-flash-exp)"
+            echo "  --verbose, -v              Show detailed processing information"
+            echo "  --help, -h                 Show this help message"
+            echo ""
+            echo "Setup:"
+            echo "  1. Get a free API key from: https://aistudio.google.com/apikey"
+            echo "  2. Export it: export GEMINI_API_KEY='your-api-key-here'"
+            echo "  3. Or add to ~/.bashrc for persistence"
+            echo ""
+            echo "Examples:"
+            echo "  $0 --from v1.2.0"
+            echo "  $0 --from main --to develop"
+            echo "  $0 --from release/1.0 --output RELEASE_NOTES.md"
+            echo "  $0 --from v1.0.0 --to v2.0.0 --verbose"
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1"
+            echo "Use --help for usage information"
+            exit 1
+            ;;
+    esac
+done
+
+# Validate required arguments
+if [ -z "$FROM_BRANCH" ]; then
+    echo "Error: --from <source-branch> is required"
+    echo "Use --help for usage information"
+    exit 1
+fi
+
+# Check for API key
+if [ -z "$GEMINI_API_KEY" ]; then
+    echo "Error: GEMINI_API_KEY not set"
+    echo ""
+    echo "Please set your Gemini API key:"
+    echo "  export GEMINI_API_KEY='your-api-key-here'"
+    echo ""
+    echo "Get a free API key from: https://aistudio.google.com/apikey"
+    exit 1
+fi
+
+# Check if we're in a git repository
+if ! git rev-parse --git-dir > /dev/null 2>&1; then
+    echo "Error: Not in a git repository"
+    exit 1
+fi
+
+# Validate branches exist
+if ! git rev-parse --verify "$FROM_BRANCH" > /dev/null 2>&1; then
+    echo "Error: Source branch '$FROM_BRANCH' not found"
+    exit 1
+fi
+
+if ! git rev-parse --verify "$TO_BRANCH" > /dev/null 2>&1; then
+    echo "Error: Target branch '$TO_BRANCH' not found"
+    exit 1
+fi
+
+if [ "$VERBOSE" = true ]; then
+    echo "Generating release notes..."
+    echo "From: $FROM_BRANCH"
+    echo "To: $TO_BRANCH"
+    echo "Model: $MODEL"
+    echo ""
+fi
+
+# Get commit log with detailed information
+COMMITS=$(git log "$FROM_BRANCH".."$TO_BRANCH" \
+    --pretty=format:'Commit: %H%nAuthor: %an%nDate: %ad%nSubject: %s%nBody: %b%n---' \
+    --date=short)
+
+# Check if there are any commits
+if [ -z "$COMMITS" ]; then
+    echo "No commits found between $FROM_BRANCH and $TO_BRANCH"
+    exit 0
+fi
+
+if [ "$VERBOSE" = true ]; then
+    COMMIT_COUNT=$(git rev-list --count "$FROM_BRANCH".."$TO_BRANCH")
+    echo "Found $COMMIT_COUNT commits"
+    echo "Sending to Gemini API..."
+    echo ""
+fi
+
+# Create the prompt for Gemini
+PROMPT="You are a technical writer creating release notes for a software project.
+
+Based on the following git commits, generate professional release notes in Markdown format.
+
+Instructions:
+- Group changes by category: Features, Bug Fixes, Documentation, Refactoring, and Other
+- Use clear, user-friendly language
+- Start with a brief summary of the release
+- Use bullet points for each change
+- Include the commit hash in parentheses after each item
+- Remove internal/technical details that aren't user-facing
+- If a commit message is unclear, infer the best description
+
+Git Commits:
+$COMMITS
+
+Generate well-formatted release notes:"
+
+# Escape the prompt for JSON
+ESCAPED_PROMPT=$(echo "$PROMPT" | jq -Rs .)
+
+# Create JSON payload
+JSON_PAYLOAD=$(cat <<EOF
+{
+  "contents": [{
+    "parts": [{
+      "text": $ESCAPED_PROMPT
+    }]
+  }],
+  "generationConfig": {
+    "temperature": 0.3,
+    "topK": 40,
+    "topP": 0.95,
+    "maxOutputTokens": 8192
+  }
+}
+EOF
+)
+
+# Call Gemini API
+API_URL="https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_API_KEY}"
+
+RESPONSE=$(curl -s -X POST "$API_URL" \
+    -H 'Content-Type: application/json' \
+    -d "$JSON_PAYLOAD")
+
+# Check for API errors
+if echo "$RESPONSE" | jq -e '.error' > /dev/null 2>&1; then
+    echo "Error from Gemini API:"
+    echo "$RESPONSE" | jq -r '.error.message'
+    exit 1
+fi
+
+# Extract the generated text from response
+RELEASE_NOTES=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text')
+
+if [ -z "$RELEASE_NOTES" ]; then
+    echo "Error: No response generated from API"
+    echo "Full response:"
+    echo "$RESPONSE" | jq '.'
+    exit 1
+fi
+
+# Output the release notes
+if [ -n "$OUTPUT_FILE" ]; then
+    echo "$RELEASE_NOTES" > "$OUTPUT_FILE"
+    echo "Release notes saved to: $OUTPUT_FILE"
+    if [ "$VERBOSE" = true ]; then
+        echo ""
+        echo "Preview:"
+        echo "----------------------------------------"
+        head -20 "$OUTPUT_FILE"
+        echo "----------------------------------------"
+    fi
+else
+    echo "$RELEASE_NOTES"
+fi
+
+if [ "$VERBOSE" = true ]; then
+    echo ""
+    echo "✓ Release notes generated successfully"
+fi
