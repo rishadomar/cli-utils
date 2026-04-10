@@ -22,14 +22,14 @@ done
 
 # Hardcoded list of repository folders (relative or absolute paths)
 repositories=(
-    "~/projects/livingston/digital-design-system-react"
-    "~/projects/livingston/digital-design-system-react-npm"
-    "~/projects/livingston/digital-design-system-starter-spa"
-    "~/projects/livingston/lii-pay-portal-spa"
-    "~/projects/livingston/lii-pay-support-spa"
-    "~/projects/livingston/tchc-spa"
-    "~/projects/livingston/tchc-pdf-wrk"
-    "~/projects/livingston/continuous_bonds"
+    "~/projects/livingston/dds/digital-design-system-react"
+    "~/projects/livingston/dds/digital-design-system-react-npm"
+    "~/projects/livingston/dds/digital-design-system-starter-spa"
+    "~/projects/livingston/payments/lii-pay-portal-spa"
+    "~/projects/livingston/payments/lii-pay-support-spa"
+    "~/projects/livingston/tchc/tchc-spa"
+    "~/projects/livingston/tchc/tchc-pdf-wrk"
+    "~/projects/livingston/uscb/lii-uscb-web-client"
 )
 
 # Get the directory where this script is located
@@ -45,9 +45,9 @@ fi
 # Pass all arguments to each repository
 ARGS=(--author "${USERNAME}" --since "$SINCE" --brief)
 
-echo "=================================="
-echo "Git Changes Across All Repositories"
-echo "=================================="
+echo "========================================================================="
+echo "Git Changes Across All Repositories since $SINCE for author: ${USERNAME}"
+echo "========================================================================="
 echo ""
 
 # Loop through each repository
